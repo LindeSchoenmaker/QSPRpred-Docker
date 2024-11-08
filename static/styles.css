@@ -2,12 +2,12 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #93D5F6;
-    color: #29235C;
+    background-color: #E4DFDA;
+    color: #001158;
 }
 
 header {
-    background-color: #307BBF;
+    background-color: #747AAC;
     padding: 20px;
     text-align: center;
     color: white;
@@ -48,7 +48,7 @@ img.logo {
 }
 
 input[type=button], input[type=submit], input[type=reset], button {
-    background-color: #E6007E;
+    background-color: #F46E31;
     color: white;
     padding: 10px 20px;
     border: none;
@@ -59,7 +59,7 @@ input[type=button], input[type=submit], input[type=reset], button {
 }
 
 input[type=button]:hover, input[type=submit]:hover, input[type=reset]:hover, button:hover {
-    background-color: #005A6C;
+    background-color: #F46E31;
 }
 
 input[type="text"], input[type="file"] {
@@ -72,7 +72,7 @@ input[type="text"], input[type="file"] {
 }
 
 button {
-    background-color: #E6007E;
+    background-color: #F46E31;
     color: white;
     padding: 10px 20px;
     border: none;
@@ -83,11 +83,11 @@ button {
 }
 
 button:hover {
-    background-color: #005A6C;
+    background-color: #001158;
 }
 
 footer {
-    background-color: #307BBF;
+    background-color: #747AAC;
     padding: 10px;
     text-align: center;
     color: white;
@@ -125,13 +125,13 @@ footer img {
     border: 1px solid #ccc;
     padding: 10px;
     border-radius: 5px;
-    background-color: #e9f6fd;
+    background-color: #747aac59;
     position: relative;
     transition: background-color 0.3s ease;
 }
 
 .model-tile:hover, .model-tile.checked {
-    background-color: #ffe6f4;  
+    background-color: #7FB685;  
 }
 
 .model-tile input[type="checkbox"] {
