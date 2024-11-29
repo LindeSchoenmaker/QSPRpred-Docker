@@ -13,6 +13,13 @@
     <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.print.min.js"></script>
+    <style>
+        img {
+            max-width: 100px;
+            max-height: 100px;
+            object-fit: contain;
+        }
+    </style>
     <script>
         $(document).ready(function() {
             $('#predictionsTable').DataTable({
@@ -45,7 +52,7 @@
 <body>
     <img src="{{ url_for('static', filename='img/logo.png') }}" alt="VHP4Safety Logo" class="center">
     <header>
-        <h1>QSPRpred - pChEMBL value  Prediction</h1>
+        <h1>QSPRpred - pChEMBL Value Prediction</h1>
     </header>
     <div class="container">
         <form action="/predict" method="post" enctype="multipart/form-data">
@@ -85,7 +92,8 @@
         <table id="predictionsTable" class="display">
             <thead>
                 <tr>
-                    {% for header in headers %}
+                    <th>Structure</th>
+                    {% for header in headers[1:] %}
                     <th>{{ header }}</th>
                     {% endfor %}
                 </tr>
@@ -93,7 +101,14 @@
             <tbody>
                 {% for row in data %}
                 <tr>
-                    {% for cell in row %}
+                    <td>
+                        {% if row[0] %}
+                        <img src="{{ row[0] }}" alt="Molecule Structure">
+                        {% else %}
+                        <p>Invalid SMILES</p>
+                        {% endif %}
+                    </td>
+                    {% for cell in row[1:] %}
                     <td>{{ cell }}</td>
                     {% endfor %}
                 </tr>

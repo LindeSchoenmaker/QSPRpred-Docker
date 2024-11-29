@@ -12,6 +12,9 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
+from rdkit import Chem
+from rdkit.Chem import Draw
+import base64
 
 app = Flask(__name__)
 
@@ -21,6 +24,23 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 # Define the models directory
 MODELS_DIR = 'models'
 
+# define RDKit implementation
+def smiles_to_image(smiles):
+    try:
+        mol = Chem.MolFromSmiles(smiles) # attempt conversion to RDKit molecule
+        if mol is None: # return None if not possible
+            return None
+        img = Draw.MolToImage(mol) # Image generation
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        buffer.seek(0)
+        img_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+        buffer.close()
+        return f"data:image/png;base64,{img_base64}"
+    except Exception as e:
+        logging.error(f"Error generating image for SMILES {smiles}: {e}") # Log the error message if any exception occurs during the process.
+        return None
+    
 def extract_model_info(directory):
     models_info = []
     for d in os.listdir(directory):
@@ -103,7 +123,7 @@ def predict():
             # Check if the model is regression or classification
             if model.task.isRegression():
                 # Format regression output as numeric values
-                formatted_predictions = [f"{pred[0]:.4f}" for pred in predictions]
+                formatted_predictions = [f"{pred[0]:.2f}" for pred in predictions] # :.2f defines decimals
             else:
                 # Format classification output as Active/Inactive
                 formatted_predictions = ["Active" if pred[0] == 1 else "Inactive" for pred in predictions]
@@ -125,10 +145,16 @@ def predict():
                 }
                 model_info_list.append(model_info)
         
-        table_data = [[smile] + [all_predictions[model][i] for model in model_names] for i, smile in enumerate(smiles_list)]
-        headers = ['SMILES']
+        table_data = []
+        for i, smile in enumerate(smiles_list): 
+            image_data = smiles_to_image(smile)
+            row = [image_data] + [all_predictions[model][i] for model in model_names]
+            table_data.append(row)
+            
+        # Update headers
+        headers = ['Structure']
         for model_name in model_names:
-            model_path = os.path.join(MODELS_DIR, model_name, f"{model_name}_meta.json")
+            model_path = os.path.join(MODELS_DIR, model_name, f"{model_name}_meta.json")               
             model = SklearnModel.fromFile(model_path)
             
             if model.task.isRegression():
@@ -252,4 +278,4 @@ def apipredict():
     return jsonify(result)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)
