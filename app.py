@@ -99,7 +99,16 @@ def predict():
             model_path = os.path.join(MODELS_DIR, model_name, f"{model_name}_meta.json")
             model = SklearnModel.fromFile(model_path)
             predictions = model.predictMols(smiles_list)
-            all_predictions[model_name] = [f"{pred[0]:.4f}" for pred in predictions]
+            
+            # Check if the model is regression or classification
+            if model.task.isRegression():
+                # Format regression output as numeric values
+                formatted_predictions = [f"{pred[0]:.4f}" for pred in predictions]
+            else:
+                # Format classification output as Active/Inactive
+                formatted_predictions = ["Active" if pred[0] == 1 else "Inactive" for pred in predictions]
+            
+            all_predictions[model_name] = formatted_predictions
             
             # Extract model info for report
             with open(model_path, 'r') as meta_file:
@@ -117,7 +126,17 @@ def predict():
                 model_info_list.append(model_info)
         
         table_data = [[smile] + [all_predictions[model][i] for model in model_names] for i, smile in enumerate(smiles_list)]
-        headers = ['SMILES'] + [f'Predicted pChEMBL value ({model})' for model in model_names]
+        headers = ['SMILES']
+        for model_name in model_names:
+            model_path = os.path.join(MODELS_DIR, model_name, f"{model_name}_meta.json")
+            model = SklearnModel.fromFile(model_path)
+            
+            if model.task.isRegression():
+                # Format regression table header
+                headers.append(f'Predicted pChEMBL Value ({model_name})')
+            else:
+                # Format classification table header
+                headers.append(f'Predicted class label ({model_name})')
 
         # Handle report download request
         if 'download_report' in request.form:
