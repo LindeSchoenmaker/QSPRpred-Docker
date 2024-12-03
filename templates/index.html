@@ -19,10 +19,13 @@
             max-height: 150px;
             object-fit: contain;
         }
+        table.dataTable td, table.dataTable th {
+            text-align: center;
+        }
     </style>
     <script>
         $(document).ready(function() {
-            $('#predictionsTable').DataTable({
+            var table = $('#predictionsTable').DataTable({
                 dom: 'Bfrtip',
                 buttons: [
                     'csvHtml5',
@@ -30,7 +33,16 @@
                     'pdfHtml5',
                     'print'
                 ],
-                scrollX: true
+                scrollX: true,
+                autoWidth: false, // Prevent automatic column width adjustment
+                columnDefs: [
+                    { targets: '_all', width: '150px' } // Adjust this width as needed
+                ]
+            });
+    
+            // Adjust columns after the table is shown or modified
+            $('#predictionsTable').on('shown.bs.collapse', function () {
+                table.columns.adjust();
             });
         });
     </script>
