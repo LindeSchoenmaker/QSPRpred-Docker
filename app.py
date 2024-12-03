@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 # Define the models directory
 MODELS_DIR = 'models'
 
-# define RDKit implementation
+# define RDKit image implementer
 def smiles_to_image(smiles):
     try:
         mol = Chem.MolFromSmiles(smiles) # attempt conversion to RDKit molecule
@@ -40,6 +40,17 @@ def smiles_to_image(smiles):
     except Exception as e:
         logging.error(f"Error generating image for SMILES {smiles}: {e}") # Log the error message if any exception occurs during the process.
         return None
+
+# define invalid SMILES scrubber
+def validate_smiles(smiles_list):
+    """
+    Validates a list of SMILES strings. Returns a list of invalid SMILES.
+    """
+    invalid_smiles = []
+    for smile in smiles_list:
+        if Chem.MolFromSmiles(smile) is None:
+            invalid_smiles.append(smile)
+    return invalid_smiles
     
 def extract_model_info(directory):
     models_info = []
@@ -87,30 +98,46 @@ def predict():
             return render_template('index.html', models=available_models, error="No model selected.")
         
         smiles_list = []
+        invalid_smiles = []
+
+        # Handle SMILES string input
         if smiles_input:
-            smiles_list.extend([smile.strip() for smile in smiles_input.split(',')])
+            input_smiles = [smile.strip() for smile in smiles_input.split(',')]
+            invalid_smiles = [smile for smile in input_smiles if Chem.MolFromSmiles(smile) is None]
+            if invalid_smiles:
+                logging.error(f"Invalid SMILES string(s): {invalid_smiles}")
+                return render_template('index.html', models=available_models, error=f"Invalid SMILES string(s): {', '.join(invalid_smiles)}")
+            smiles_list.extend(input_smiles)
         
+        # Handle uploaded file
         if uploaded_file and uploaded_file.filename != '':
             file_name = uploaded_file.filename
             logging.debug("Processing uploaded file.")
             uploaded_df = pd.read_csv(uploaded_file)
             logging.debug(f"Uploaded file contents: {uploaded_df.head()}")
             if 'SMILES' in uploaded_df.columns:
-                smiles_list.extend(uploaded_df['SMILES'].tolist())
+                file_smiles = uploaded_df['SMILES'].tolist()
+                invalid_smiles = [smile for smile in file_smiles if Chem.MolFromSmiles(smile) is None]
+                smiles_list.extend([smile for smile in file_smiles if Chem.MolFromSmiles(smile) is not None])
         elif file_name:
-            # Reprocess the previously uploaded file
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
             if os.path.exists(file_path):
                 logging.debug("Reprocessing previous uploaded file.")
                 uploaded_df = pd.read_csv(file_path)
                 if 'SMILES' in uploaded_df.columns:
-                    smiles_list.extend(uploaded_df['SMILES'].tolist())
+                    file_smiles = uploaded_df['SMILES'].tolist()
+                    invalid_smiles = [smile for smile in file_smiles if Chem.MolFromSmiles(smile) is None]
+                    smiles_list.extend([smile for smile in file_smiles if Chem.MolFromSmiles(smile) is not None])
         
         logging.debug(f"Final SMILES list: {smiles_list}")
+        logging.debug(f"Invalid SMILES detected: {invalid_smiles}")
         
         if not smiles_list:
-            logging.error("No SMILES strings provided.")
-            return render_template('index.html', models=available_models, error="No SMILES strings provided.")
+            error_message = "No valid SMILES strings provided."
+            if invalid_smiles:
+                error_message += f" Invalid SMILES: {', '.join(invalid_smiles)}"
+            logging.error(error_message)
+            return render_template('index.html', models=available_models, error=error_message)
         
         all_predictions = {}
         model_info_list = []
@@ -122,8 +149,7 @@ def predict():
             
             # Check if the model is regression or classification
             if model.task.isRegression():
-                # Format regression output as numeric values
-                formatted_predictions = [f"{pred[0]:.2f}" for pred in predictions] # :.2f defines decimals
+                formatted_predictions = [f"{pred[0]:.2f}" for pred in predictions]
             else:
                 # Format classification output as Active/Inactive
                 formatted_predictions = ["Active" if pred[0] == 1 else "Inactive" for pred in predictions]
@@ -164,12 +190,11 @@ def predict():
                 # Format classification table header
                 headers.append(f'Predicted class label ({model_name})')
 
-        # Handle report download request
-        if 'download_report' in request.form:
-            report_buffer = create_report(model_info_list, headers, table_data)
-            return send_file(report_buffer, as_attachment=True, download_name="prediction_report.pdf", mimetype='application/pdf')
+        error_message = None
+        if invalid_smiles:
+            error_message = f"Invalid SMILES excluded from table: {', '.join(invalid_smiles)}"
         
-        return render_template('index.html', models=available_models, headers=headers, data=table_data, smiles_input=smiles_input, model_names=model_names, file_name=file_name)
+        return render_template('index.html', models=available_models, headers=headers, data=table_data, smiles_input=smiles_input, model_names=model_names, file_name=file_name, error=error_message)
     except Exception as e:
         logging.exception("An error occurred while processing the request.")
         return render_template('index.html', models=available_models, error="An error occurred while processing the request.")
