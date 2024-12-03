@@ -103,11 +103,17 @@ def predict():
         # Handle SMILES string input
         if smiles_input:
             input_smiles = [smile.strip() for smile in smiles_input.split(',')]
-            invalid_smiles = [smile for smile in input_smiles if Chem.MolFromSmiles(smile) is None]
-            if invalid_smiles:
-                logging.error(f"Invalid SMILES string(s): {invalid_smiles}")
-                return render_template('index.html', models=available_models, error=f"Invalid SMILES string(s): {', '.join(invalid_smiles)}")
-            smiles_list.extend(input_smiles)
+            
+            # Check if only one SMILES string is entered
+            if len(input_smiles) == 1:
+                if Chem.MolFromSmiles(input_smiles[0]) is None:  # Check for invalid single SMILES
+                    logging.error(f"Invalid SMILES string: {input_smiles[0]}")  # Log the invalid SMILES
+                    return render_template('index.html', models=available_models, error="Invalid SMILES string.")  # Display error for single invalid SMILES
+                else:
+                    smiles_list.extend(input_smiles)  # Add valid SMILES to processing list
+            else:
+                invalid_smiles.extend([smile for smile in input_smiles if Chem.MolFromSmiles(smile) is None])  # Collect invalid SMILES
+                smiles_list.extend([smile for smile in input_smiles if Chem.MolFromSmiles(smile) is not None])  # Collect valid SMILES
         
         # Handle uploaded file
         if uploaded_file and uploaded_file.filename != '':
@@ -117,8 +123,8 @@ def predict():
             logging.debug(f"Uploaded file contents: {uploaded_df.head()}")
             if 'SMILES' in uploaded_df.columns:
                 file_smiles = uploaded_df['SMILES'].tolist()
-                invalid_smiles = [smile for smile in file_smiles if Chem.MolFromSmiles(smile) is None]
-                smiles_list.extend([smile for smile in file_smiles if Chem.MolFromSmiles(smile) is not None])
+                invalid_smiles.extend([smile for smile in file_smiles if Chem.MolFromSmiles(smile) is None])  # Collect invalid SMILES from file
+                smiles_list.extend([smile for smile in file_smiles if Chem.MolFromSmiles(smile) is not None])  # Collect valid SMILES from file
         elif file_name:
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
             if os.path.exists(file_path):
@@ -126,16 +132,14 @@ def predict():
                 uploaded_df = pd.read_csv(file_path)
                 if 'SMILES' in uploaded_df.columns:
                     file_smiles = uploaded_df['SMILES'].tolist()
-                    invalid_smiles = [smile for smile in file_smiles if Chem.MolFromSmiles(smile) is None]
-                    smiles_list.extend([smile for smile in file_smiles if Chem.MolFromSmiles(smile) is not None])
+                    invalid_smiles.extend([smile for smile in file_smiles if Chem.MolFromSmiles(smile) is None])  # Collect invalid SMILES from previous file
+                    smiles_list.extend([smile for smile in file_smiles if Chem.MolFromSmiles(smile) is not None])  # Collect valid SMILES from previous file
         
         logging.debug(f"Final SMILES list: {smiles_list}")
-        logging.debug(f"Invalid SMILES detected: {invalid_smiles}")
+        logging.debug(f"Invalid SMILES detected: {invalid_smiles}")  # Log invalid SMILES
         
-        if not smiles_list:
-            error_message = "No valid SMILES strings provided."
-            if invalid_smiles:
-                error_message += f" Invalid SMILES: {', '.join(invalid_smiles)}"
+        if not smiles_list and not invalid_smiles:
+            error_message = "No valid or invalid SMILES strings provided."
             logging.error(error_message)
             return render_template('index.html', models=available_models, error=error_message)
         
@@ -192,7 +196,7 @@ def predict():
 
         error_message = None
         if invalid_smiles:
-            error_message = f"Invalid SMILES excluded from table: {', '.join(invalid_smiles)}"
+            error_message = f"Invalid SMILES excluded from table: {', '.join(invalid_smiles)}"  # Mention invalid SMILES in error message
         
         return render_template('index.html', models=available_models, headers=headers, data=table_data, smiles_input=smiles_input, model_names=model_names, file_name=file_name, error=error_message)
     except Exception as e:
