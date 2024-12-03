@@ -108,7 +108,7 @@ def predict():
             if len(input_smiles) == 1:
                 if Chem.MolFromSmiles(input_smiles[0]) is None:  # Check for invalid single SMILES
                     logging.error(f"Invalid SMILES string: {input_smiles[0]}")  # Log the invalid SMILES
-                    return render_template('index.html', models=available_models, error="Invalid SMILES string.")  # Display error for single invalid SMILES
+                    return render_template('index.html', models=available_models, error="Invalid SMILES string")  # Display error for single invalid SMILES
                 else:
                     smiles_list.extend(input_smiles)  # Add valid SMILES to processing list
             else:
@@ -139,7 +139,7 @@ def predict():
         logging.debug(f"Invalid SMILES detected: {invalid_smiles}")  # Log invalid SMILES
         
         if not smiles_list and not invalid_smiles:
-            error_message = "No valid or invalid SMILES strings provided."
+            error_message = "No SMILES strings provided"
             logging.error(error_message)
             return render_template('index.html', models=available_models, error=error_message)
         
@@ -196,7 +196,7 @@ def predict():
 
         error_message = None
         if invalid_smiles:
-            error_message = f"Invalid SMILES excluded from table: {', '.join(invalid_smiles)}"  # Mention invalid SMILES in error message
+            error_message = f"Invalid SMILES, could not be processed: {', '.join(invalid_smiles)}"  # Mention invalid SMILES in error message
         
         return render_template('index.html', models=available_models, headers=headers, data=table_data, smiles_input=smiles_input, model_names=model_names, file_name=file_name, error=error_message)
     except Exception as e:
