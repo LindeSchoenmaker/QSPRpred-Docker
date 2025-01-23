@@ -1,20 +1,20 @@
-import logging
-from flask import Flask, request, render_template, jsonify, Response, send_file
-from qsprpred.models import SklearnModel
-import os
-import io
+import base64
 import csv
+import io
 import json
-import traceback
+import logging
+import os
+
 import pandas as pd
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import inch
+from flask import Flask, Response, jsonify, render_template, request
+from qsprpred.models import SklearnModel
 from rdkit import Chem
 from rdkit.Chem import Draw
-import base64
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 app = Flask(__name__)
 
@@ -178,11 +178,11 @@ def predict():
         table_data = []
         for i, smile in enumerate(smiles_list): 
             image_data = smiles_to_image(smile)
-            row = [image_data] + [all_predictions[model][i] for model in model_names]
+            row = [image_data] + [smile] + [all_predictions[model][i] for model in model_names]
             table_data.append(row)
             
         # Update headers
-        headers = ['Structure']
+        headers = ['Structure', 'SMILES']
         for model_name in model_names:
             model_path = os.path.join(MODELS_DIR, model_name, f"{model_name}_meta.json")               
             model = SklearnModel.fromFile(model_path)
@@ -199,7 +199,7 @@ def predict():
             error_message = f"Invalid SMILES, could not be processed: {', '.join(invalid_smiles)}"  # Mention invalid SMILES in error message
         
         return render_template('index.html', models=available_models, headers=headers, data=table_data, smiles_input=smiles_input, model_names=model_names, file_name=file_name, error=error_message)
-    except Exception as e:
+    except Exception:
         logging.exception("An error occurred while processing the request.")
         return render_template('index.html', models=available_models, error="An error occurred while processing the request.")
 
@@ -307,4 +307,4 @@ def apipredict():
     return jsonify(result)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
