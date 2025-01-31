@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <body>
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="VHP4Safety Logo" class="center">
+        <header>
+            <h1>QSPRpred - pChEMBL Value Prediction</h1>
+        </header>
+        <div class="container">
+            <h2>Welcome</h2>
+            <p>This tool allows users to predict the activity of their chemicals of interest for various protein targets relevant to the mechpath project. This prediction is done by target-specific, pretrained QSAR models. Next to the model name the containers below also show some model properties. Compounds should be entered as SMILES strings. The predicted bioactivity is given as predicted pchembl. This translates to a concentration of 10^-pchembl for a half maximal response. For example, an IC50 measurement of 1nM would have a pChEMBL value of 9.</p>
+            <a href="{{ url_for('model') }}">Go to the QSPRpred Prediction tool</a>
+        </div>
+    </body>
+{% endblock %}

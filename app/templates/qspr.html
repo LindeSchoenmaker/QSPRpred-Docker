@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+<head>
+    <script>
+        $(document).ready(function() {
+            var table = $('#predictionsTable').DataTable({
+                dom: 'Bfrtip',
+                buttons: [
+                    'csvHtml5',
+                    'excelHtml5',
+                    'pdfHtml5',
+                    'print'
+                ],
+                scrollX: true,
+                autoWidth: false, // Prevent automatic column width adjustment
+                columnDefs: [
+                    { targets: [1], visible: false},
+                    { targets: '_all', visible: true, width: '150px' } // Adjust this width as needed
+                ]
+            });
+    
+            // Adjust columns after the table is shown or modified
+            $('#predictionsTable').on('shown.bs.collapse', function () {
+                table.columns.adjust();
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var checkboxes = document.querySelectorAll('.model-tile input[type="checkbox"]');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        this.parentElement.classList.add('checked');
+                    } else {
+                        this.parentElement.classList.remove('checked');
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+
+{% block content %}
+    <body>
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="VHP4Safety Logo" class="center">
+        <header>
+            <h1>QSPRpred - pChEMBL Value Prediction</h1>
+        </header>
+        <div class="container">
+            <form action="/predict" method="post" enctype="multipart/form-data">
+                <p>Select model here:</label><br>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px;">
+                    {% for model in models %}
+                    <div class="model-tile {% if model.name in model_names %}checked{% endif %}">
+                        <input type="checkbox" id="model_{{ loop.index }}" name="model" value="{{ model.name }}" {% if model.name in model_names %}checked{% endif %}>
+                        <label for="model_{{ loop.index }}">
+                            <strong>{{ model.name }}</strong><br>
+                            Property: {{ model.target_property_name }}<br>
+                            Task: {{ model.target_property_task }}<br>
+                            Calculator: {{ model.feature_calculator }}<br>
+                            Radius: {{ model.radius }}<br>
+                            nBits: {{ model.nBits }}<br>
+                            Algorithm: {{ model.algorithm }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <br>
+                <label for="smiles">Enter SMILES strings (comma-separated):</label><br>
+                <input type="text" id="smiles" name="smiles" value="{{ smiles_input }}" placeholder="Example: Cc1c(Cc2cc(I)c(OCC(=O)O)c(I)c2)c2c(cccc2)o1,O=c1cnn(-c2cc(Cl)c(Oc3ccc(O)c(S(=O)(=O)N4CCc5ccccc54)c3)c(Cl)c2)c(=O)[nH]1"><br><br>
+
+                <label for="file">or Upload CSV file with SMILES (with a column named <q>SMILES</q>):</label><br>
+                <input type="file" id="file" name="file" accept=".csv"><br><br>
+                
+                <input type="submit" value="Run">
+                <button type="submit" name="download_report" value="true">Generate Report</button>
+            </form>
+            {% if data %}
+        </div>
+        
+        <header>
+            <h2>Predictions</h2>
+        </header>
+        <div class="container">
+            <table id="predictionsTable" class="display">
+                <thead>
+                    <tr>
+                        <th>Structure</th>
+                        {% for header in headers[1:] %}
+                        <th>{{ header }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in data %}
+                    <tr>
+                        <td>
+                            {% if row[0] %}
+                            <img src="{{ row[0] }}" alt="Molecule Structure">
+                            {% else %}
+                            <p>Invalid SMILES</p>
+                            {% endif %}
+                        </td>
+                        {% for cell in row[1:] %}
+                        <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        
+            {% if error %}
+            <p style="color:red;">{{ error }}</p>
+            {% endif %}
+        </div>
+
+        <footer>
+            <p class="footer-content">
+                View the source code on&nbsp<a href="https://github.com/VHP4Safety/QSPRpred-Docker" target="_blank">GitHub</a>&nbsp&nbsp
+                <img src="{{ url_for('static', filename='img/github.svg') }}" alt="GitHub Logo">
+            </p>
+        </footer>
+    </body>
+{% endblock %}

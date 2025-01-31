@@ -1,82 +1,79 @@
-import base64
 import csv
 import io
 import json
 import logging
 import os
+from urllib.parse import urlsplit
 
 import pandas as pd
-from flask import Flask, Response, jsonify, render_template, request
+import sqlalchemy as sa
+from flask import Response, flash, jsonify, redirect, render_template, request, url_for
+from flask_login import current_user, login_required, login_user, logout_user
 from qsprpred.models import SklearnModel
 from rdkit import Chem
-from rdkit.Chem import Draw
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-app = Flask(__name__)
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+from app import app, db
+from app.forms import LoginForm
+from app.models import User
+from app.pred import extract_model_info, smiles_to_image
 
 # Define the models directory
-MODELS_DIR = 'models'
-
-# define RDKit image implementer
-def smiles_to_image(smiles):
-    try:
-        mol = Chem.MolFromSmiles(smiles) # attempt conversion to RDKit molecule
-        if mol is None: # return None if not possible
-            return None
-        img = Draw.MolToImage(mol) # Image generation
-        buffer = io.BytesIO()
-        img.save(buffer, format="PNG")
-        buffer.seek(0)
-        img_base64 = base64.b64encode(buffer.read()).decode('utf-8')
-        buffer.close()
-        return f"data:image/png;base64,{img_base64}"
-    except Exception as e:
-        logging.error(f"Error generating image for SMILES {smiles}: {e}") # Log the error message if any exception occurs during the process.
-        return None
-
-# define invalid SMILES scrubber
-def validate_smiles(smiles_list):
-    """
-    Validates a list of SMILES strings. Returns a list of invalid SMILES.
-    """
-    invalid_smiles = []
-    for smile in smiles_list:
-        if Chem.MolFromSmiles(smile) is None:
-            invalid_smiles.append(smile)
-    return invalid_smiles
-    
-def extract_model_info(directory):
-    models_info = []
-    for d in os.listdir(directory):
-        meta_path = os.path.join(directory, d, f"{d}_meta.json")
-        if os.path.isfile(meta_path):
-            with open(meta_path, 'r') as meta_file:
-                meta_data = json.load(meta_file)
-                state = meta_data['py/state']
-                model_info = {
-                    'name': state['name'],
-                    'target_property_name': state['targetProperties'][0]['py/state']['name'],
-                    'target_property_task': state['targetProperties'][0]['py/state']['task']['py/reduce'][1]['py/tuple'][0],
-                    'feature_calculator': state['featureCalculators'][0]['py/object'].split('.')[-1],
-                    'radius': state['featureCalculators'][0]['py/state']['radius'],
-                    'nBits': state['featureCalculators'][0]['py/state']['nBits'],
-                    'algorithm': state['alg'].split('.')[-1]
-                }
-                models_info.append(model_info)
-                logging.info(f"Loaded model metadata: {model_info}")
-    return models_info
+MODELS_DIR = '/usr/src/models'
 
 @app.route('/')
-def home():
+@app.route('/index')
+@login_required
+def index():
+    posts = [
+        {
+            'author': {'username': 'John'},
+            'body': 'Beautiful day in Portland!'
+        },
+        {
+            'author': {'username': 'Susan'},
+            'body': 'The Avengers movie was so cool!'
+        }
+    ]
+    return render_template('index.html', title='Home', posts=posts)
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = db.session.scalar(
+            sa.select(User).where(User.username == form.username.data))
+        if user is None or not user.check_password(form.password.data):
+            flash('Invalid username or password')
+            return redirect(url_for('login'))
+        login_user(user, remember=form.remember_me.data)
+        next_page = request.args.get('next')
+        if not next_page or urlsplit(next_page).netloc != '':
+            next_page = url_for('index')
+        return redirect(next_page)
+    return render_template('login.html', title='Sign In', form=form)
+
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+
+
+@app.route('/qspr')
+@login_required
+def model():
     available_models = extract_model_info(MODELS_DIR)
-    return render_template('index.html', models=available_models)
+    print(available_models)
+    return render_template('qspr.html', models=available_models)
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -95,7 +92,7 @@ def predict():
         
         if not model_names:
             logging.error("No model selected.")
-            return render_template('index.html', models=available_models, error="No model selected.")
+            return render_template('qspr.html', models=available_models, error="No model selected.")
         
         smiles_list = []
         invalid_smiles = []
@@ -108,7 +105,7 @@ def predict():
             if len(input_smiles) == 1:
                 if Chem.MolFromSmiles(input_smiles[0]) is None:  # Check for invalid single SMILES
                     logging.error(f"Invalid SMILES string: {input_smiles[0]}")  # Log the invalid SMILES
-                    return render_template('index.html', models=available_models, error="Invalid SMILES string")  # Display error for single invalid SMILES
+                    return render_template('qspr.html', models=available_models, error="Invalid SMILES string")  # Display error for single invalid SMILES
                 else:
                     smiles_list.extend(input_smiles)  # Add valid SMILES to processing list
             else:
@@ -141,7 +138,7 @@ def predict():
         if not smiles_list and not invalid_smiles:
             error_message = "No SMILES strings provided"
             logging.error(error_message)
-            return render_template('index.html', models=available_models, error=error_message)
+            return render_template('qspr.html', models=available_models, error=error_message)
         
         all_predictions = {}
         model_info_list = []
@@ -198,10 +195,10 @@ def predict():
         if invalid_smiles:
             error_message = f"Invalid SMILES, could not be processed: {', '.join(invalid_smiles)}"  # Mention invalid SMILES in error message
         
-        return render_template('index.html', models=available_models, headers=headers, data=table_data, smiles_input=smiles_input, model_names=model_names, file_name=file_name, error=error_message)
+        return render_template('qspr.html', models=available_models, headers=headers, data=table_data, smiles_input=smiles_input, model_names=model_names, file_name=file_name, error=error_message)
     except Exception:
         logging.exception("An error occurred while processing the request.")
-        return render_template('index.html', models=available_models, error="An error occurred while processing the request.")
+        return render_template('qspr.html', models=available_models, error="An error occurred while processing the request.")
 
 def create_report(model_info_list, headers, table_data):
     buffer = io.BytesIO()
@@ -305,6 +302,3 @@ def apipredict():
 
 
     return jsonify(result)
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
