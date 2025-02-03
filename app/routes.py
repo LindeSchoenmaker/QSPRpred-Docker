@@ -202,7 +202,8 @@ def predict():
                 headers.append(f'Predicted pChEMBL Value ({model_name})')
             else:
                 # Format classification table header
-                headers.append(f'Predicted Class (probability) ({model_name})')
+                threshold = model.targetProperties[0].th[0]
+                headers.append(f'Predicted Class (probability) ({model_name} with threshold: {threshold:.1f})')
 
         error_message = None
         if invalid_smiles:
