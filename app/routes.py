@@ -165,7 +165,7 @@ def predict():
             else:
                 # Format classification output as Active/Inactive
                 predictions = model.predictMols(smiles_list, use_probas=True)
-                formatted_predictions = [f"Active ({pred[0][1]:.2f})" if pred[0][1] > 0.5 else f"Inactive ({pred[0][0]:.2f})" for pred in predictions]
+                formatted_predictions = [f"Active ({pred[1]:.2f})" if pred[1] > 0.5 else f"Inactive ({pred[0]:.2f})" for pred in predictions[0]]
             
             all_predictions[model_name] = formatted_predictions
             
