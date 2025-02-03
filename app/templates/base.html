@@ -37,6 +37,30 @@
                 });
             });
         </script>
+            <script>
+                $(document).ready(function() {
+                    var table = $('#predictionsTable').DataTable({
+                        dom: 'Bfrtip',
+                        buttons: [
+                            'csvHtml5',
+                            'excelHtml5',
+                            'pdfHtml5',
+                            'print'
+                        ],
+                        scrollX: true,
+                        autoWidth: false, // Prevent automatic column width adjustment
+                        columnDefs: [
+                            { targets: [1], visible: false},
+                            { targets: '_all', visible: true, width: '150px' } // Adjust this width as needed
+                        ]
+                    });
+            
+                    // Adjust columns after the table is shown or modified
+                    $('#predictionsTable').on('shown.bs.collapse', function () {
+                        table.columns.adjust();
+                    });
+                });
+            </script>
 </head>
 
 <img src="{{ url_for('static', filename='img/logo.png') }}" alt="VHP4Safety Logo" class="center">
