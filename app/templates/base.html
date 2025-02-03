@@ -24,9 +24,11 @@
         }
     </style>
 </head>
-<body>
-    <div>
-        Mechpath application:
+
+<img src="{{ url_for('static', filename='img/logo.png') }}" alt="VHP4Safety Logo" class="center">
+<header>
+    <h1>QSPRpred - pChEMBL Value Prediction</h1>
+    <nav>
         <a href="{{ url_for('index') }}">Home</a>
         <a href="{{ url_for('model') }}">Tool</a>
         {% if current_user.is_anonymous %}
@@ -34,8 +36,10 @@
         {% else %}
         <a href="{{ url_for('logout') }}">Logout</a>
         {% endif %}
-    </div>
-    <hr>
+    </nav>  
+</header>
+
+<body>
     {% with messages = get_flashed_messages() %}
     {% if messages %}
     <ul>

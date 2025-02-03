@@ -1,3 +1,11 @@
+@import "compass/css3";
+
+@import "compass/css3";
+@import "compass/reset";
+*{
+	@include box-sizing(border-box);
+}
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -10,7 +18,27 @@ header {
     background-color: #747AAC;
     padding: 20px;
     text-align: center;
+    position: relative;
+    top: 0;
     color: white;
+    nav{
+		position: absolute;
+		bottom: 0;
+		height: 60px;
+		line-height: 60px;
+		width: 100%;
+		a{
+			color: #fff;
+			display: inline-block;
+			padding: 10px 15px;
+			line-height: 2;
+			text-decoration: none;
+       @include border-radius(2px);
+        &:hover{
+          @include box-shadow(0 0 0 1px #fff);
+        }
+		}
+    }
 }
 
 .center {
@@ -69,6 +97,17 @@ input[type="text"], input[type="file"] {
     box-sizing: border-box;
     border: 2px solid #ccc;
     border-radius: 5px;
+    font-size: 12pt;
+}
+
+input[type="password"], input[type="file"] {
+    width: 100%;  
+    padding: 10px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    font-size: 12pt;
 }
 
 button {
@@ -146,4 +185,21 @@ footer img {
     margin-right: 30px;  
 }
 
+ul {
+    display: block;
+    list-style-type: none;
+    text-align: center;
+    unicode-bidi: isolate;
+}
 
+/* Sticky Header Style */	
+/* ---------------------------------------- */ 
+body.sticky-header{
+	padding-top: 100px;
+	header{
+		height: 60px;
+		h1{
+			@include scale(0);
+		}
+	}
+}
