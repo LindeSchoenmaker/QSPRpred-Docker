@@ -10,7 +10,8 @@
                     <div class="model-tile {% if model.name in model_names %}checked{% endif %}">
                         <input type="checkbox" id="model_{{ loop.index }}" name="model" value="{{ model.name }}" {% if model.name in model_names %}checked{% endif %}>
                         <label for="model_{{ loop.index }}">
-                            <strong>{{ model.name }}</strong><br>
+                            <strong>{{ model.pref_name }}</strong><br>
+                            Model: {{ model.name }}<br>
                             Property: {{ model.target_property_name }}<br>
                             Task: {{ model.target_property_task }}<br>
                             Calculator: {{ model.feature_calculator }}<br>

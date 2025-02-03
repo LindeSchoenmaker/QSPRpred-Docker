@@ -2,6 +2,7 @@
     "py/object": "qsprpred.models.scikit_learn.SklearnModel",
     "py/state": {
         "name": "P08253 (MMP2) XGboost Model",
+        "pref_name": "Matrix Metalloproteinase-2",
         "baseDir": ".",
         "targetProperties": [
             {

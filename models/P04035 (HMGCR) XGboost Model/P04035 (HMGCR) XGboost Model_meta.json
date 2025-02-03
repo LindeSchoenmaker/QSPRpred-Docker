@@ -2,6 +2,7 @@
     "py/object": "qsprpred.models.scikit_learn.SklearnModel",
     "py/state": {
         "name": "P04035 (HMGCR) XGboost Model",
+        "pref_name": "HMG-CoA Reductase",
         "baseDir": ".",
         "targetProperties": [
             {

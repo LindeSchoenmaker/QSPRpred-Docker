@@ -2,6 +2,7 @@
     "py/object": "qsprpred.models.scikit_learn.SklearnModel",
     "py/state": {
         "name": "Q9Y4K0 (LOXL2) XGboost Model",
+        "pref_name": "Lysyl Oxidase Homolog 2",
         "baseDir": ".",
         "targetProperties": [
             {

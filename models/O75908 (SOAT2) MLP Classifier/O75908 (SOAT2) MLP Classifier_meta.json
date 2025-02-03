@@ -2,12 +2,14 @@
     "py/object": "qsprpred.models.scikit_learn.SklearnModel",
     "py/state": {
         "name": "O75908 (SOAT2) MLP Classifier",
+        "pref_name": "Sterol O-acyltransferase 2",
         "baseDir": ".",
         "targetProperties": [
             {
                 "py/object": "qsprpred.tasks.TargetProperty",
                 "py/state": {
                     "name": "pchembl_value_Mean",
+                    
                     "task": {
                         "py/reduce": [
                             {

@@ -20,10 +20,32 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 from app import app, db
 from app.forms import LoginForm
 from app.models import User
-from app.pred import extract_model_info, smiles_to_image
+from app.pred import smiles_to_image
 
 # Define the models directory
 MODELS_DIR = '/usr/src/models'
+
+def extract_model_info(directory):
+    models_info = []
+    for d in os.listdir(directory):
+        meta_path = os.path.join(directory, d, f"{d}_meta.json")
+        if os.path.isfile(meta_path):
+            with open(meta_path, 'r') as meta_file:
+                meta_data = json.load(meta_file)
+                state = meta_data['py/state']
+                model_info = {
+                    'name': state['name'],
+                    'pref_name': state['pref_name'],
+                    'target_property_name': state['targetProperties'][0]['py/state']['name'],
+                    'target_property_task': state['targetProperties'][0]['py/state']['task']['py/reduce'][1]['py/tuple'][0],
+                    'feature_calculator': state['featureCalculators'][0]['py/object'].split('.')[-1],
+                    'radius': state['featureCalculators'][0]['py/state']['radius'],
+                    'nBits': state['featureCalculators'][0]['py/state']['nBits'],
+                    'algorithm': state['alg'].split('.')[-1]
+                }
+                models_info.append(model_info)
+                logging.info(f"Loaded model metadata: {model_info}")
+    return models_info
 
 @app.route('/')
 @app.route('/index')
@@ -153,6 +175,7 @@ def predict():
                 state = meta_data['py/state']
                 model_info = {
                     'name': state['name'],
+                    'pref_name': state['pref_name'],
                     'target_property_name': state['targetProperties'][0]['py/state']['name'],
                     'target_property_task': state['targetProperties'][0]['py/state']['task']['py/reduce'][1]['py/tuple'][0],
                     'feature_calculator': state['featureCalculators'][0]['py/object'].split('.')[-1],
@@ -204,6 +227,7 @@ def create_report(model_info_list, headers, table_data):
     # Add model metadata
     for model_info in model_info_list:
         elements.append(Paragraph(f"Model: {model_info['name']}", styles['Heading2']))
+        elements.append(Paragraph(f"Model Name: {model_info['pref_name']}", styles['Heading2']))
         elements.append(Paragraph(f"Target Property Name: {model_info['target_property_name']}", styles['Normal']))
         elements.append(Paragraph(f"Target Property Task: {model_info['target_property_task']}", styles['Normal']))
         elements.append(Paragraph(f"Feature Calculator: {model_info['feature_calculator']}", styles['Normal']))

@@ -2,6 +2,7 @@
     "py/object": "qsprpred.models.scikit_learn.SklearnModel",
     "py/state": {
         "name": "P41597 (CCR2) XGboost Model",
+        "pref_name": "C-C Chemokine Receptor Type 2",
         "baseDir": ".",
         "targetProperties": [
             {

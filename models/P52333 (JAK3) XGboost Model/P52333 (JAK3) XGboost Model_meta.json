@@ -2,6 +2,7 @@
     "py/object": "qsprpred.models.scikit_learn.SklearnModel",
     "py/state": {
         "name": "P52333 (JAK3) XGboost Model",
+        "pref_name": "Tyrosine-Protein Kinase JAK3",
         "baseDir": ".",
         "targetProperties": [
             {

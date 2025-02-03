@@ -2,6 +2,7 @@
     "py/object": "qsprpred.models.scikit_learn.SklearnModel",
     "py/state": {
         "name": "Q09472 (EP300) XGboost Model",
+        "pref_name": "Histone Acetyltransferase p300",
         "baseDir": ".",
         "targetProperties": [
             {
