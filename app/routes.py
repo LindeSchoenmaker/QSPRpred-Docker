@@ -135,14 +135,15 @@ def predict():
             logging.debug(f"Processing model: {model_name}")
             model_path = os.path.join(MODELS_DIR, model_name, f"{model_name}_meta.json")
             model = SklearnModel.fromFile(model_path)
-            predictions = model.predictMols(smiles_list)
             
             # Check if the model is regression or classification
             if model.task.isRegression():
+                predictions = model.predictMols(smiles_list)
                 formatted_predictions = [f"{pred[0]:.2f}" for pred in predictions]
             else:
                 # Format classification output as Active/Inactive
-                formatted_predictions = ["Active" if pred[0] == 1 else "Inactive" for pred in predictions]
+                predictions = model.predictMols(smiles_list, use_probas=True)
+                formatted_predictions = [f"Active ({pred[0][1]:.2f})" if pred[0][1] > 0.5 else f"Inactive ({pred[0][0]:.2f})" for pred in predictions]
             
             all_predictions[model_name] = formatted_predictions
             
@@ -178,7 +179,7 @@ def predict():
                 headers.append(f'Predicted pChEMBL Value ({model_name})')
             else:
                 # Format classification table header
-                headers.append(f'Predicted class label ({model_name})')
+                headers.append(f'Predicted Class (probability) ({model_name})')
 
         error_message = None
         if invalid_smiles:
