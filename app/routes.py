@@ -29,17 +29,7 @@ MODELS_DIR = '/usr/src/models'
 @app.route('/index')
 @login_required
 def index():
-    posts = [
-        {
-            'author': {'username': 'John'},
-            'body': 'Beautiful day in Portland!'
-        },
-        {
-            'author': {'username': 'Susan'},
-            'body': 'The Avengers movie was so cool!'
-        }
-    ]
-    return render_template('index.html', title='Home', posts=posts)
+    return render_template('index.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -72,7 +62,6 @@ def logout():
 @login_required
 def model():
     available_models = extract_model_info(MODELS_DIR)
-    print(available_models)
     return render_template('qspr.html', models=available_models)
 
 @app.route('/predict', methods=['POST'])

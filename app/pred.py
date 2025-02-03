@@ -7,8 +7,6 @@ import os
 from rdkit import Chem
 from rdkit.Chem import Draw
 
-# Define the models directory
-MODELS_DIR = '/usr/src/models'
 
 # define RDKit image implementer
 def smiles_to_image(smiles):
