@@ -25,20 +25,6 @@
             });
         });
     </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var checkboxes = document.querySelectorAll('.model-tile input[type="checkbox"]');
-            checkboxes.forEach(function(checkbox) {
-                checkbox.addEventListener('change', function() {
-                    if (this.checked) {
-                        this.parentElement.classList.add('checked');
-                    } else {
-                        this.parentElement.classList.remove('checked');
-                    }
-                });
-            });
-        });
-    </script>
 </head>
 
 {% block content %}

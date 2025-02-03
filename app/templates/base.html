@@ -23,6 +23,20 @@
             text-align: center;
         }
     </style>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var checkboxes = document.querySelectorAll('.model-tile input[type="checkbox"]');
+                checkboxes.forEach(function(checkbox) {
+                    checkbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            this.parentElement.classList.add('checked');
+                        } else {
+                            this.parentElement.classList.remove('checked');
+                        }
+                    });
+                });
+            });
+        </script>
 </head>
 
 <img src="{{ url_for('static', filename='img/logo.png') }}" alt="VHP4Safety Logo" class="center">
