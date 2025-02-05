@@ -79,7 +79,7 @@ def logout():
     return redirect(url_for('index'))
 
 
-
+@app.route('/predict')
 @app.route('/qspr')
 @login_required
 def model():
