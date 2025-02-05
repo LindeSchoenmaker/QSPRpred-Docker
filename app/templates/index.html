@@ -4,7 +4,7 @@
     <body>
         <div class="container">
             <h2>Welcome</h2>
-            <p>This tool allows users to predict the activity of their chemicals of interest for various protein targets relevant to the mechpath project. This prediction is done by target-specific, pretrained QSAR models. Next to the model name the containers below also show some model properties. Compounds should be entered as SMILES strings. The predicted bioactivity is given as predicted pchembl. This translates to a concentration of 10^-pchembl for a half maximal response. For example, an IC50 measurement of 1nM would have a pChEMBL value of 9.</p>
+            <p>This tool allows users to predict the activity of chemicals of interest for various protein targets relevant to liver disease <a href="https://rdcu.be/d8Jel">(read more here)</a>. This prediction is done by target-specific, pretrained QSAR models. The model outputs a prediction of the likelihood of the compound being active. The threshold for activity is expressed in pChEMBL, the negative log of the half maximal response concentration. For example, when the model threshold for activity is 6, a compound is considered active when the half maximal response concentration is lower than 1μM.</p>
             <a href="{{ url_for('model') }}">Go to the QSPRpred Prediction tool</a>
         </div>
     </body>
