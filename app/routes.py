@@ -20,7 +20,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 from app import app, db
 from app.forms import LoginForm
 from app.models import User
-from app.pred import smiles_to_image
+from app.pred import get_nearest_neighbor, smiles_to_image
 
 # Define the models directory
 MODELS_DIR = '/usr/src/models'
@@ -152,7 +152,9 @@ def predict():
             return render_template('qspr.html', models=available_models, error=error_message)
         
         all_predictions = {}
+        all_probas = {}
         model_info_list = []
+        
         for model_name in model_names:
             logging.debug(f"Processing model: {model_name}")
             model_path = os.path.join(MODELS_DIR, model_name, f"{model_name}_meta.json")
@@ -162,12 +164,17 @@ def predict():
             if model.task.isRegression():
                 predictions = model.predictMols(smiles_list)
                 formatted_predictions = [f"{pred[0]:.2f}" for pred in predictions]
+                probas = ["NA"] * len(predictions)
             else:
                 # Format classification output as Active/Inactive
                 predictions = model.predictMols(smiles_list, use_probas=True)
-                formatted_predictions = [f"Active ({pred[1]:.2f})" if pred[1] > 0.5 else f"Inactive ({pred[0]:.2f})" for pred in predictions[0]]
+                formatted_predictions = ["Active" if pred[1] > 0.5 else "Inactive" for pred in predictions[0]]
+                probas = [f"{pred[1]:.2f}" if pred[1] > 0.5 else f"{pred[0]:.2f}" for pred in predictions[0]]
+
+                
             
             all_predictions[model_name] = formatted_predictions
+            all_probas[model_name] = probas
             
             # Extract model info for report
             with open(model_path, 'r') as meta_file:
@@ -186,24 +193,30 @@ def predict():
                 model_info_list.append(model_info)
         
         table_data = []
-        for i, smile in enumerate(smiles_list): 
-            image_data = smiles_to_image(smile)
-            row = [image_data] + [smile] + [all_predictions[model][i] for model in model_names]
-            table_data.append(row)
             
         # Update headers
-        headers = ['Structure', 'SMILES']
+        headers = ['Model', 'Model Activity Threshold', 'Structure', 'SMILES', 'Predicted Activity', 'Class Probability', 'Nearest Neighbor', 'Nearest Neighbor SMILES', 'Source']
         for model_name in model_names:
+            accession = " ".join([model_name.split(" ")[0], model_name.split(" ")[1]])
+            train_df = pd.read_csv(f'data/{accession}.tsv', sep='\t').reset_index()
+            train_smiles = train_df['SMILES'].to_list()
+            ms = [Chem.MolFromSmiles(x) for x in train_smiles]
             model_path = os.path.join(MODELS_DIR, model_name, f"{model_name}_meta.json")               
             model = SklearnModel.fromFile(model_path)
             
             if model.task.isRegression():
-                # Format regression table header
-                headers.append(f'Predicted pChEMBL Value ({model_name})')
+                threshold = ('NA')
             else:
-                # Format classification table header
                 threshold = model.targetProperties[0].th[0]
-                headers.append(f'Predicted Class (probability) ({model_name} with threshold: {threshold:.1f})')
+
+            for i, smile in enumerate(smiles_list): 
+                image_data = smiles_to_image(smile)
+                id_top = get_nearest_neighbor(smile, ms)
+                nearest_neighbor = train_df.iloc[id_top]['SMILES']
+                doi_nn = train_df.iloc[id_top]['all_doc_ids']
+                image_data_nn = smiles_to_image(nearest_neighbor)
+                row = [model_name] + [f'{threshold:.1f}'] + [image_data] + [smile] + [all_predictions[model_name][i]] + [all_probas[model_name][i]] + [image_data_nn] + [nearest_neighbor] + [doi_nn] 
+                table_data.append(row)
 
         error_message = None
         if invalid_smiles:

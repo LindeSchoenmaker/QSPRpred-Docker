@@ -42,8 +42,7 @@
             <table id="predictionsTable" class="display">
                 <thead>
                     <tr>
-                        <th>Structure</th>
-                        {% for header in headers[1:] %}
+                        {% for header in headers %}
                         <th>{{ header }}</th>
                         {% endfor %}
                     </tr>
@@ -51,14 +50,41 @@
                 <tbody>
                     {% for row in data %}
                     <tr>
+                        <!-- <td>
+                            {{ row[0] }}
+                        </td>
                         <td>
-                            {% if row[0] %}
-                            <img src="{{ row[0] }}" alt="Molecule Structure">
+                            {{ row[1] }}
+                        </td>
+                        <td>
+                            {% if row[2] %}
+                            <img src="{{ row[2] }}" alt="Molecule Structure">
                             {% else %}
                             <p>Invalid SMILES</p>
                             {% endif %}
                         </td>
-                        {% for cell in row[1:] %}
+                        <td>
+                            {{ row[3] }}
+                        </td>
+                        <td>
+                            <img src="{{ row[4] }}" alt="NN Structure">
+                        </td> -->
+
+                        {% for cell in row[:2] %}
+                        <td>{{ cell }}</td>
+                        {% endfor %}
+                        <td>
+                            {% if row[2] %}
+                            <img src="{{ row[2] }}" alt="Molecule Structure">
+                            {% else %}
+                            <p>Invalid SMILES</p>
+                            {% endif %}
+                        </td>
+                        {% for cell in row[3:6] %}
+                        <td>{{ cell }}</td>
+                        {% endfor %}
+                        <td><img src="{{ row[6] }}" alt="NN Structure"></td>
+                        {% for cell in row[7:] %}
                         <td>{{ cell }}</td>
                         {% endfor %}
                     </tr>

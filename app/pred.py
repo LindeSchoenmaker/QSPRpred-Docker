@@ -2,8 +2,9 @@ import base64
 import io
 import logging
 
-from rdkit import Chem
-from rdkit.Chem import Draw
+import numpy as np
+from rdkit import Chem, DataStructs
+from rdkit.Chem import AllChem, Draw
 
 
 # define RDKit image implementer
@@ -34,5 +35,24 @@ def validate_smiles(smiles_list):
             invalid_smiles.append(smile)
     return invalid_smiles
     
+def get_nearest_neighbor(smile, ms):
+    """_summary_
 
+    Args:
+        smile (str): smiles string
+        ms (list): list of rdkit molecules from reference set
+
+    Returns:
+        id for most similar molecule in reference set
+    """
+    fpgen = AllChem.GetMorganGenerator(radius=3)
+    m1 = Chem.MolFromSmiles(smile)
+    query_fp = fpgen.GetSparseCountFingerprint(m1)
+
+    target_fingerprints = [fpgen.GetSparseCountFingerprint(x) for x in ms]
+    scores = DataStructs.BulkTanimotoSimilarity(query_fp, target_fingerprints)
+
+    id_top = np.argmax(np.array(scores))
+    
+    return id_top
 

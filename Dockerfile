@@ -21,6 +21,7 @@ RUN pip install gunicorn
 
 COPY app app
 COPY models models
+COPY data data
 COPY migrations migrations
 COPY application.py config.py app.db ./
 
