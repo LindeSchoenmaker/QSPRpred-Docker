@@ -50,26 +50,6 @@
                 <tbody>
                     {% for row in data %}
                     <tr>
-                        <!-- <td>
-                            {{ row[0] }}
-                        </td>
-                        <td>
-                            {{ row[1] }}
-                        </td>
-                        <td>
-                            {% if row[2] %}
-                            <img src="{{ row[2] }}" alt="Molecule Structure">
-                            {% else %}
-                            <p>Invalid SMILES</p>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {{ row[3] }}
-                        </td>
-                        <td>
-                            <img src="{{ row[4] }}" alt="NN Structure">
-                        </td> -->
-
                         {% for cell in row[:2] %}
                         <td>{{ cell }}</td>
                         {% endfor %}
